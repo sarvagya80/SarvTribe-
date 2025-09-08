@@ -18,15 +18,11 @@ export default function PostPage() {
     fetcher
   );
 
-  if (isLoading)
-    return <div className="text-center mt-10 text-gray-500 dark:text-gray-400">Loading post...</div>;
-
-  if (error || !post)
-    return <div className="text-center mt-10 text-red-500 dark:text-red-400">Post not found.</div>;
-
+  if (isLoading) return <div className="text-center mt-10 text-gray-500 dark:text-gray-400">Loading post...</div>;
+  if (error || !post) return <div className="text-center mt-10 text-red-500 dark:text-red-400">Post not found.</div>;
+  
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
-      {/* Back link */}
       <Link
         href="/"
         className="text-sm text-indigo-500 dark:text-indigo-400 hover:underline mb-6 inline-flex items-center gap-1"
@@ -34,10 +30,8 @@ export default function PostPage() {
         <span className="text-lg">&larr;</span> Back to feed
       </Link>
 
-      {/* Post */}
       <PostCard post={post} mutate={mutate} />
 
-      {/* Comments Section */}
       <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
           All Comments ({post.comments.length})
@@ -45,7 +39,7 @@ export default function PostPage() {
 
         {post.comments.length > 0 ? (
           <div className="space-y-4">
-            {post.comments.map((comment: any) => (
+            {post.comments.map((comment) => (
               <CommentItem key={comment.id} comment={comment} postId={post.id} mutate={mutate} />
             ))}
           </div>

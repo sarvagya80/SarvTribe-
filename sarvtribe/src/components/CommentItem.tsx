@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import { HeartIcon as HeartIconOutline } from '@heroicons/react/24/outline';
+import { CommentType } from '@/components/PostFeed';
 
 export default function CommentItem({ comment, postId, mutate }: { comment: any, postId: string, mutate: () => void }) {
   const { data: session } = useSession();

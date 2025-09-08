@@ -8,7 +8,7 @@ import { Post, User, Like, Comment, CommentLike } from '@prisma/client';
 import { AnimatePresence, motion } from 'framer-motion';
 import PostCard from "./PostCard";
 
-
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 // A detailed type for a single comment, including its relations
 export type CommentType = Comment & {
@@ -24,7 +24,7 @@ export type PostType = Post & {
   comments: CommentType[];
 };
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 
 interface PostFeedProps {
   feedType: 'for-you' | 'following';
