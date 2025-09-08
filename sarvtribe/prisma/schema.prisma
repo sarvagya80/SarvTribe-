@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+}
+
+enum FollowRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model User {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            String?
+  username        String?   @unique
+  email           String?   @unique
+  hashedPassword  String? 
+  image           String?
+  bio             String?
+  coverPhoto      String?
+  location        String?
+  isPrivate       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  followingIds    String[]  @db.ObjectId
+
+  // --- Relations ---
+  accounts        Account[]
+  sessions        Session[]
+  posts           Post[]
+  likes           Like[]
+  comments        Comment[]
+  commentLikes    CommentLike[]
+  messages        Message[] @relation("SentMessages")
+  stories         Story[]
+  storyHighlights StoryHighlight[]
+  notifications   Notification[] @relation("UserNotifications")
+  conversations   Conversation[] @relation(fields: [conversationIds], references: [id])
+  conversationIds String[]       @db.ObjectId
+  seenMessageIds  String[]       @db.ObjectId
+  seenMessages    Message[]      @relation("SeenBy", fields: [seenMessageIds], references: [id])
+  sentFollowRequests     FollowRequest[] @relation("SentFollowRequests")
+  receivedFollowRequests FollowRequest[] @relation("ReceivedFollowRequests")
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  expires      DateTime
+  userId       String   @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Post {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  body         String?
+  imageUrl     String?
+  hashtags     String[]
+  musicUrl     String?
+  filter       String?
+  textOverlay  String?
+  textPosition String?  @default("middle")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  userId       String   @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes        Like[]
+  comments     Comment[]
+}
+
+model Like {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  userId    String   @db.ObjectId
+  postId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@unique([userId, postId])
+  @@index([postId])
+}
+
+// --- NEW MODEL FOR COMMENT LIKES ---
+model CommentLike {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  commentId String   @db.ObjectId
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, commentId])
+  @@index([commentId])
+}
+
+// --- UPDATED COMMENT MODEL ---
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  body      String
+  createdAt DateTime @default(now())
+  
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  postId    String   @db.ObjectId
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // For comment likes
+  likes     CommentLike[]
+
+  // For comment replies (self-relation)
+  parentId  String?   @db.ObjectId
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies   Comment[] @relation("CommentReplies")
+
+  @@index([postId])
+}
+
+model Conversation {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt     DateTime  @default(now())
+  lastMessageAt DateTime  @default(now())
+  participantIds  String[]  @db.ObjectId
+  participants    User[]    @relation(fields: [participantIds], references: [id])
+  messages      Message[]
+}
+
+model Message {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  body            String?
+  image           String?
+  createdAt       DateTime  @default(now())
+  seenByIds       String[]  @db.ObjectId
+  seenBy          User[]    @relation("SeenBy", fields: [seenByIds], references: [id])
+  conversationId  String    @db.ObjectId
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId        String    @db.ObjectId
+  sender          User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model FollowRequest {
+  id         String              @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt  DateTime            @default(now())
+  status     FollowRequestStatus @default(PENDING)
+  fromUserId String @db.ObjectId
+  toUserId   String @db.ObjectId
+  fromUser   User   @relation("SentFollowRequests", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser     User   @relation("ReceivedFollowRequests", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId])
+}
+
+model Story {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  mediaUrl     String?
+  mediaType    String?
+  textOverlay  String?
+  filter       String?
+  musicUrl     String?
+  textPosition String?  @default("middle")
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+  userId       String   @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StoryHighlight {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  coverUrl  String
+  storyIds  String[] @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  body        String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  type        NotificationType
+  postId      String?
+  userId      String   @db.ObjectId
+  user        User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  senderId    String
+  senderName  String
+  senderImage String?
+}
