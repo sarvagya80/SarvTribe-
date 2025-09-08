@@ -7,16 +7,22 @@ import { useSession } from 'next-auth/react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import { HeartIcon as HeartIconOutline } from '@heroicons/react/24/outline';
-import { CommentType } from '@/components/PostFeed';
+import { CommentType } from '@/components/PostFeed'; // Import our new type
 
-export default function CommentItem({ comment, postId, mutate }: { comment: any, postId: string, mutate: () => void }) {
+interface CommentItemProps {
+  comment: CommentType;
+  postId: string;
+  mutate: () => void;
+}
+
+export default function CommentItem({ comment, postId, mutate }: CommentItemProps) {
   const { data: session } = useSession();
   const [isReplying, setIsReplying] = useState(false);
   const [replyBody, setReplyBody] = useState('');
 
   const currentUserId = session?.user?.id;
   const isOwner = comment.user.id === currentUserId;
-  const hasLiked = comment.likes?.some((like: any) => like.userId === currentUserId);
+  const hasLiked = comment.likes?.some((like) => like.userId === currentUserId);
 
   const handleLike = async () => {
     const method = hasLiked ? 'DELETE' : 'POST';
@@ -45,9 +51,15 @@ export default function CommentItem({ comment, postId, mutate }: { comment: any,
     mutate();
   };
 
-   return (
+  return (
     <div className="flex items-start space-x-3">
-      <Image src={comment.user.image || '/default-avatar.png'} alt={comment.user.name} width={32} height={32} className="rounded-full" />
+      <Image 
+        src={comment.user.image || '/default-avatar.png'}
+        alt={comment.user.name || 'User avatar'}
+        width={32}
+        height={32}
+        className="rounded-full"
+      />
       <div className="flex-1">
         <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg">
           <div className="flex items-center space-x-2">
@@ -61,7 +73,7 @@ export default function CommentItem({ comment, postId, mutate }: { comment: any,
             {hasLiked ? <HeartIconSolid className="w-4 h-4 text-red-500" /> : <HeartIconOutline className="w-4 h-4" />}
             <span>{comment.likes?.length || 0}</span>
           </button>
-          <button onClick={() => setIsReplying(true)} className="font-semibold">Reply</button>
+          <button onClick={() => setIsReplying(!isReplying)} className="font-semibold">Reply</button>
           {isOwner && <button onClick={handleDelete} className="font-semibold text-red-500">Delete</button>}
         </div>
         
@@ -82,7 +94,7 @@ export default function CommentItem({ comment, postId, mutate }: { comment: any,
         {/* Render nested replies recursively */}
         {comment.replies?.length > 0 && (
           <div className="ml-6 mt-2 space-y-3">
-            {comment.replies.map((reply: any) => (
+            {comment.replies.map((reply) => (
               <CommentItem key={reply.id} comment={reply} postId={postId} mutate={mutate} />
             ))}
           </div>

@@ -3,9 +3,9 @@
 import { useEffect } from 'react';
 import useSWR from 'swr';
 import { io } from 'socket.io-client';
-import { socket } from '@/lib/prismadb';
 import { Post, User, Like, Comment, CommentLike } from '@prisma/client';
 import { AnimatePresence, motion } from 'framer-motion';
+import { socket } from '@/lib/prismadb'; // Use the shared socket instance
 import PostCard from "./PostCard";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -23,8 +23,6 @@ export type PostType = Post & {
   likes: Like[];
   comments: CommentType[];
 };
-
-
 
 interface PostFeedProps {
   feedType: 'for-you' | 'following';
