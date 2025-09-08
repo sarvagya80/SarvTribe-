@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import useSWR from 'swr';
-import { io } from 'socket.io-client';
 import { Post, User, Like, Comment, CommentLike } from '@prisma/client';
 import { AnimatePresence, motion } from 'framer-motion';
 import { socket } from '@/lib/prismadb'; // Use the shared socket instance

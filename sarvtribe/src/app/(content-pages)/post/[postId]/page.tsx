@@ -7,20 +7,36 @@ import { PostType } from '@/components/PostFeed';
 import Link from 'next/link';
 import CommentItem from '@/components/CommentItem';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = async (url: string): Promise<unknown> => {
+  const res = await fetch(url);
+  return res.json();
+};
 
 export default function PostPage() {
-  const params = useParams();
-  const postId = params.postId as string;
+  const params = useParams<{ postId: string }>();
+  const postId = params?.postId;
 
   const { data: post, error, isLoading, mutate } = useSWR<PostType>(
     postId ? `/api/post/${postId}` : null,
     fetcher
   );
 
-  if (isLoading) return <div className="text-center mt-10 text-gray-500 dark:text-gray-400">Loading post...</div>;
-  if (error || !post) return <div className="text-center mt-10 text-red-500 dark:text-red-400">Post not found.</div>;
-  
+  if (isLoading) {
+    return (
+      <div className="text-center mt-10 text-gray-500 dark:text-gray-400">
+        Loading post...
+      </div>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <div className="text-center mt-10 text-red-500 dark:text-red-400">
+        Post not found.
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto max-w-2xl py-8 px-4">
       <Link
@@ -40,7 +56,12 @@ export default function PostPage() {
         {post.comments.length > 0 ? (
           <div className="space-y-4">
             {post.comments.map((comment) => (
-              <CommentItem key={comment.id} comment={comment} postId={post.id} mutate={mutate} />
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                postId={post.id}
+                mutate={mutate}
+              />
             ))}
           </div>
         ) : (
