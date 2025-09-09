@@ -1,7 +1,7 @@
 // src/app/api/highlights/[highlightId]/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from "@/lib/auth";
 import prisma from '@/lib/prismadb';
 
 export async function DELETE(

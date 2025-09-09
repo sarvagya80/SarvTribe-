@@ -7,9 +7,14 @@ import { PostType } from '@/components/PostFeed';
 import Link from 'next/link';
 import CommentItem from '@/components/CommentItem';
 
-const fetcher = async (url: string): Promise<unknown> => {
+// Correctly typed fetcher
+const fetcher = async (url: string): Promise<PostType> => {
   const res = await fetch(url);
-  return res.json();
+  if (!res.ok) {
+    throw new Error('Failed to fetch post');
+  }
+  const data = (await res.json()) as PostType;
+  return data;
 };
 
 export default function PostPage() {

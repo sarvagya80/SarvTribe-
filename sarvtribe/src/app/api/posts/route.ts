@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from "@/lib/auth";
 import prisma from '@/lib/prismadb';
 import { socket } from '@/lib/prismadb';
 
@@ -12,25 +12,26 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-  const { postBody, imageUrl, textOverlay, filter, textPosition, musicUrl } = body;
+    const { postBody, imageUrl, textOverlay, filter, textPosition, musicUrl } = body;
 
     if (!postBody && !imageUrl) {
       return new NextResponse('Post cannot be empty', { status: 400 });
     }
     
+    // FIX: Add a null check for postBody before using .match
     const hashtagRegex = /#(\w+)/g;
-    const hashtags = postBody.match(hashtagRegex)?.map(tag => tag.substring(1).toLowerCase()) || [];
+    const hashtags = postBody?.match(hashtagRegex)?.map((tag: string) => tag.substring(1).toLowerCase()) || [];
 
     const post = await prisma.post.create({
-    data: {
-      body: postBody,
-      imageUrl: imageUrl,
-      hashtags: hashtags,
-      textOverlay,
-      filter,
-      textPosition,
-      musicUrl: musicUrl,
-      userId: session.user.id,
+      data: {
+        body: postBody,
+        imageUrl: imageUrl,
+        hashtags: hashtags,
+        textOverlay,
+        filter,
+        textPosition,
+        musicUrl: musicUrl,
+        userId: session.user.id,
       },
       include: {
         user: true,
@@ -45,7 +46,8 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+// FIX: Removed the unused 'request' parameter
+export async function GET() {
   try {
     const posts = await prisma.post.findMany({
       orderBy: { createdAt: 'desc' },
@@ -53,14 +55,13 @@ export async function GET(request: Request) {
         user: true,
         likes: true,
         comments: {
-          // THIS IS THE FIX: Include the user (author) for each comment
           include: {
             user: true,
           },
           orderBy: {
             createdAt: 'desc',
           },
-          take: 2 // Only take the 2 most recent for the feed preview
+          take: 2 
         },
       },
     });

@@ -1,9 +1,18 @@
 'use client';
-import { useState } from 'react';
+
+import { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, Mail, Lock } from 'lucide-react'; // nice icons
+
+function CallbackUrlLoader({ onChange }: { onChange: (url: string) => void }) {
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    onChange(searchParams.get('callbackUrl') || '/');
+  }, [searchParams, onChange]);
+  return null;
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -11,8 +20,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/';
+  const [callbackUrl, setCallbackUrl] = useState<string>('/');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +43,9 @@ export default function LoginPage() {
 
   return (
     <main className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+      <Suspense fallback={null}>
+        <CallbackUrlLoader onChange={setCallbackUrl} />
+      </Suspense>
       {/* Glass card */}
       <div className="relative w-full max-w-md p-8 space-y-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-2xl">
         <h1 className="text-3xl font-extrabold text-center text-gray-900 dark:text-white">

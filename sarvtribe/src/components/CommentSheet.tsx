@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { TrashIcon } from '@heroicons/react/24/solid';
 import { FaceSmileIcon } from '@heroicons/react/24/outline';
-import Picker from 'emoji-picker-react';
+import Picker, { Theme } from 'emoji-picker-react'; // Import Theme
 
 interface CommentType {
   id: string;
@@ -50,7 +50,6 @@ export default function CommentSheet({ postId }: { postId: string }) {
 
   return (
     <div className="p-4 mt-4 border-t border-white/10 relative">
-      {/* Form */}
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <input
           type="text"
@@ -74,14 +73,13 @@ export default function CommentSheet({ postId }: { postId: string }) {
         </button>
       </form>
 
-      {/* Emoji Picker */}
       {showEmojiPicker && (
         <div className="absolute bottom-16 right-0 z-10">
-          <Picker onEmojiClick={onEmojiClick} theme="dark" />
+          {/* Use the imported Theme object here */}
+          <Picker onEmojiClick={onEmojiClick} theme={Theme.DARK} />
         </div>
       )}
 
-      {/* Comments */}
       <div className="mt-5 space-y-4">
         {comments?.map((comment) => {
           const isOwner = session?.user?.id === comment.user.id;

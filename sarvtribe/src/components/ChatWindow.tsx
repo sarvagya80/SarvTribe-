@@ -16,10 +16,12 @@ import {
 } from 'lucide-react';
 import { socket } from '@/lib/prismadb';
 
-const fetcher = async (url: string): Promise<unknown> => {
+const fetcher = async (url: string): Promise<MessageType[]> => {
   const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch messages");
   return res.json();
 };
+
 
 interface ChatWindowProps {
   conversationId: string | null;
@@ -45,9 +47,10 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const { data: messages, error, isLoading, mutate } = useSWR<MessageType[]>(
-    conversationId ? `/api/messages/${conversationId}` : null,
-    fetcher
-  );
+  conversationId ? `/api/messages/${conversationId}` : null,
+  fetcher
+);
+
 
   useEffect(() => {
     if (conversationId && messages && messages.length > 0) {
@@ -84,10 +87,11 @@ export default function ChatWindow({ conversationId }: ChatWindowProps) {
       body: newMessage,
       createdAt: new Date().toISOString(),
       sender: {
-        id: session.user.id,
-        name: session.user.name,
-        image: session.user.image,
-      },
+      id: session.user.id,
+      name: session.user.name ?? null,
+      image: session.user.image ?? null,
+       },
+    
     };
     mutate(
       (currentMessages: MessageType[] = []) => [

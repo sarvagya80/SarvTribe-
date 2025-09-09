@@ -80,19 +80,27 @@ export default function StoryArchivePage() {
       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
         {stories?.map(story => (
           <div
-            key={story.id}
-            className="relative aspect-square rounded-md overflow-hidden cursor-pointer"
-            onClick={() => toggleStorySelection(story.id)}
-          >
-            <Image src={story.mediaUrl} alt="Archived Story" fill className="object-cover" />
-            {selectedStoryIds.includes(story.id) && (
-              <div className="absolute inset-0 border-4 border-indigo-500 bg-black/50 flex items-center justify-center">
-                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-lg">
-                  ✓
+              key={story.id}
+              className="relative aspect-square rounded-md overflow-hidden cursor-pointer"
+              onClick={() => toggleStorySelection(story.id)}
+            >
+              {story.mediaUrl ? (
+                <Image src={story.mediaUrl} alt="Archived Story" fill className="object-cover" />
+              ) : (
+                <div className="bg-gray-300 dark:bg-gray-700 w-full h-full flex items-center justify-center text-gray-500">
+                  No Media
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+
+              {selectedStoryIds.includes(story.id) && (
+                <div className="absolute inset-0 border-4 border-indigo-500 bg-black/50 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-lg">
+        ✓
+                  </div>
+                </div>
+              )}
+            </div>
+
         ))}
       </div>
     </div>

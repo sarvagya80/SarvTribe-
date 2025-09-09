@@ -6,15 +6,39 @@ import useSWR from 'swr';
 import ProfileHeader from '@/components/ProfileHeader';
 import PostGrid from '@/components/PostGrid';
 import EditProfileModal from '@/components/EditProfileModal';
-import { Post, User, StoryHighlight } from '@prisma/client';
+import { User, StoryHighlight } from '@prisma/client';
 import { Squares2X2Icon, HeartIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 
+// Fetcher helper
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
+// Define PostType to match what PostGrid expects
+export type PostType = {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  body: string | null;
+  imageUrl: string | null;
+  hashtags: string[];
+  musicUrl: string | null;
+  filter: string | null;
+  textOverlay: string | null;
+  textPosition: string | null;
+  likesCount?: number;
+  commentsCount?: number;
+  user?: {
+    id: string;
+    username: string | null;
+    name: string | null;
+    image: string | null;
+  };
+};
+
 type UserProfile = User & {
-  posts: Post[];
+  posts: PostType[];
   followersCount: number;
   followingCount: number;
   storyHighlights: StoryHighlight[];
@@ -33,7 +57,7 @@ export default function ProfilePage() {
     fetcher
   );
 
-  const { data: likedPosts, isLoading: areLikesLoading } = useSWR<Post[]>(
+  const { data: likedPosts, isLoading: areLikesLoading } = useSWR<PostType[]>(
     activeTab === 'liked' && userId ? `/api/users/${userId}/likes` : null,
     fetcher
   );
