@@ -7,9 +7,8 @@ const nextConfig: NextConfig = {
   // Reduce memory pressure during development by disabling persistent FS cache
   webpack: (config, { dev }) => {
     if (dev) {
-      // Use in-memory cache or disable cache to avoid large array buffer allocations
-      // @ts-expect-error - webpack types may not include 'cache' union narrowing here
-      config.cache = false;
+      // Use in-memory cache to avoid large array buffer allocations during dev
+      config.cache = { type: 'memory' };
     }
     return config;
   },
