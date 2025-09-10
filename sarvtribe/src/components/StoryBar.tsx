@@ -52,10 +52,11 @@ export default function StoryBar({ onStoryClick }: StoryBarProps) {
               <div className="w-full h-full rounded-full bg-white dark:bg-black p-[2px]">
                 <div className="relative w-full h-full rounded-full overflow-hidden">
                   <Image
-                    src={userStoryGroup.user.image || '/default-avatar.png'}
+                    src={userStoryGroup.user.image || '/default-avatar.jpeg'}
                     alt={userStoryGroup.user.name}
                     fill
-                    className="object-cover"
+                    className="object-cover rounded-full"
+                    key={userStoryGroup.user.image}
                   />
                 </div>
               </div>

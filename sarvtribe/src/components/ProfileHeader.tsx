@@ -98,7 +98,7 @@ export default function ProfileHeader({ user: profileUser, onEdit, mutateProfile
           {/* Avatar */}
           <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden border-4 border-white dark:border-gray-900 shadow-xl">
             <Image
-              src={profileUser.image || '/default-avatar.png'}
+              src={profileUser.image || '/default-avatar.jpeg'}
               alt={`${profileUser.name}'s profile picture`}
               fill
               className="object-cover"

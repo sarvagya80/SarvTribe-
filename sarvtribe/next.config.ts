@@ -4,6 +4,15 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Reduce memory pressure during development by disabling persistent FS cache
+  webpack: (config, { dev }) => {
+    if (dev) {
+      // Use in-memory cache or disable cache to avoid large array buffer allocations
+      // @ts-expect-error - webpack types may not include 'cache' union narrowing here
+      config.cache = false;
+    }
+    return config;
+  },
   images: {
     remotePatterns: [
       {

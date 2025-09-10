@@ -7,8 +7,9 @@ import { socket } from '@/lib/prismadb';
 // Function to LIKE a post and create a notification
 export async function POST(
   req: Request,
-  { params }: { params: { postId: string } }
+  context: { params: Promise<{ postId: string }> }
 ) {
+  const { postId } = await context.params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return new NextResponse('Unauthorized', { status: 401 });
@@ -21,7 +22,7 @@ export async function POST(
     where: {
       userId_postId: {
         userId: currentUser.id,
-        postId: params.postId,
+        postId,
       },
     },
   });
@@ -32,14 +33,14 @@ export async function POST(
 
   await prisma.like.create({
     data: {
-      postId: params.postId,
+      postId,
       userId: currentUser.id,
     },
   });
 
   // --- Notification Logic ---
   try {
-    const post = await prisma.post.findUnique({ where: { id: params.postId }});
+    const post = await prisma.post.findUnique({ where: { id: postId }});
     if (post && post.userId !== currentUser.id) {
         await prisma.notification.create({
             data: {
@@ -58,15 +59,16 @@ export async function POST(
   }
   // --- END ---
 
-  socket.emit("new_like", { postId: params.postId });
+  socket.emit("new_like", { postId });
   return new NextResponse('Post liked', { status: 200 });
 }
 
 // Function to UNLIKE a post (no notification needed here)
 export async function DELETE(
   req: Request,
-  { params }: { params: { postId: string } }
+  context: { params: Promise<{ postId: string }> }
 ) {
+  const { postId } = await context.params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return new NextResponse('Unauthorized', { status: 401 });
@@ -76,13 +78,13 @@ export async function DELETE(
     await prisma.like.delete({
       where: {
         userId_postId: {
-          postId: params.postId,
+          postId,
           userId: session.user.id,
         },
       },
     });
     
-    socket.emit("new_like", { postId: params.postId });
+    socket.emit("new_like", { postId });
     return new NextResponse('Post unliked', { status: 200 });
   } catch (error) {
       // It's possible the like doesn't exist, so we can handle that error gracefully

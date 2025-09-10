@@ -156,11 +156,12 @@ export default function PostCard({ post, mutate }: PostCardProps) {
         <div className="flex items-center space-x-3">
           <Link href={`/profile/${author.id}`}>
             <Image
-              src={authorAvatar || '/default-avatar.png'}
+              src={authorAvatar || '/default-avatar.jpeg'}
               alt={`${authorName}'s avatar`}
               width={40}
               height={40}
-              className="rounded-full"
+              className="rounded-full object-cover"
+              key={authorAvatar}
             />
           </Link>
           <div>
@@ -288,11 +289,12 @@ export default function PostCard({ post, mutate }: PostCardProps) {
           className="mt-3 flex items-center border-t border-gray-200 dark:border-gray-700 pt-3"
         >
           <Image
-            src={session?.user?.image || '/default-avatar.png'}
+            src={session?.user?.image || '/default-avatar.jpeg'}
             alt="Your avatar"
             width={32}
             height={32}
-            className="rounded-full"
+            className="rounded-full object-cover"
+            key={session?.user?.image}
           />
           <div className="flex-grow flex items-center bg-gray-100 dark:bg-gray-800 rounded-full mx-2">
             <input
@@ -321,8 +323,18 @@ export default function PostCard({ post, mutate }: PostCardProps) {
 
         {/* Emoji Picker */}
         {showEmojiPicker && (
-          <div className="absolute bottom-16 right-0 z-10">
-            <Picker onEmojiClick={onEmojiClick} theme={Theme.DARK} />
+          <div className="absolute bottom-16 right-0 z-50">
+            <div className="relative">
+              <button
+                type="button"
+                aria-label="Close emoji picker"
+                onClick={() => setShowEmojiPicker(false)}
+                className="absolute -top-2 -right-2 z-50 bg-black/70 text-white rounded-full w-6 h-6 flex items-center justify-center"
+              >
+                ×
+              </button>
+              <Picker onEmojiClick={(e) => { onEmojiClick(e); setShowEmojiPicker(false); }} theme={Theme.DARK} />
+            </div>
           </div>
         )}
       </div>

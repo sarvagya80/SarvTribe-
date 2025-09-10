@@ -36,7 +36,7 @@ export default function EditProfileModal({ isOpen, onClose, user }: EditProfileM
       setName(user.name || '');
       setBio(user.bio || '');
       setLocation(user.location || '');
-      setProfilePicPreview(user.image || '/default-avatar.png');
+      setProfilePicPreview(user.image || '/default-avatar.jpeg');
       setCoverPhotoPreview(user.coverPhoto || '/default-cover.png');
       setProfilePicFile(null);
       setCoverPhotoFile(null);
@@ -80,15 +80,22 @@ export default function EditProfileModal({ isOpen, onClose, user }: EditProfileM
       if (coverPhotoFile) {
         coverPhotoUrl = await uploadToCloudinary(coverPhotoFile);
       }
+      // Cache-bust avatar across the app by appending a version query param
+      const versionedProfilePicUrl = profilePicUrl ? `${profilePicUrl}?v=${Date.now()}` : profilePicUrl;
       
       await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, bio, location, image: profilePicUrl, coverPhoto: coverPhotoUrl }),
+        body: JSON.stringify({ name, bio, location, image: versionedProfilePicUrl, coverPhoto: coverPhotoUrl }),
       });
 
-      await update({ name, image: profilePicUrl });
+      await update({ name, image: versionedProfilePicUrl });
+      // Revalidate commonly used endpoints so the new avatar propagates
       globalMutate(`/api/profile/${user.id}`);
+      globalMutate('/api/users/suggestions');
+      globalMutate('/api/stories');
+      globalMutate('/api/posts');
+      globalMutate('/api/notifications');
       onClose();
     } catch (error) {
       console.error("Failed to save profile:", error);
@@ -152,7 +159,7 @@ export default function EditProfileModal({ isOpen, onClose, user }: EditProfileM
                     <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Profile Picture</label>
                     <div className="flex justify-center mt-2">
                       <div className="relative">
-                        <Image src={profilePicPreview || '/default-avatar.png'} width={96} height={96} alt="Profile preview" className="rounded-full object-cover" />
+                        <Image src={profilePicPreview || '/default-avatar.jpeg'} width={96} height={96} alt="Profile preview" className="rounded-full object-cover" />
                         <input type="file" accept="image/*" ref={profilePicRef} onChange={(e) => handleFileChange(e, 'profile')} className="hidden" />
                         <button
                           type="button"

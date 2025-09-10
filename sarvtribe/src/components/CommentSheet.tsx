@@ -74,9 +74,18 @@ export default function CommentSheet({ postId }: { postId: string }) {
       </form>
 
       {showEmojiPicker && (
-        <div className="absolute bottom-16 right-0 z-10">
-          {/* Use the imported Theme object here */}
-          <Picker onEmojiClick={onEmojiClick} theme={Theme.DARK} />
+        <div className="absolute bottom-16 right-0 z-50">
+          <div className="relative">
+            <button
+              type="button"
+              aria-label="Close emoji picker"
+              onClick={() => setShowEmojiPicker(false)}
+              className="absolute -top-2 -right-2 z-50 bg-black/70 text-white rounded-full w-6 h-6 flex items-center justify-center"
+            >
+              ×
+            </button>
+            <Picker onEmojiClick={(e) => { onEmojiClick(e); setShowEmojiPicker(false); }} theme={Theme.DARK} />
+          </div>
         </div>
       )}
 
@@ -89,7 +98,7 @@ export default function CommentSheet({ postId }: { postId: string }) {
               className="group flex items-start gap-3"
             >
               <Image
-                src={comment.user.image || '/default-avatar.png'}
+                src={comment.user.image || '/default-avatar.jpeg'}
                 alt="avatar"
                 width={36}
                 height={36}

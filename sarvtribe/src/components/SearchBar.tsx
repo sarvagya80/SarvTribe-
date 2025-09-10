@@ -52,7 +52,7 @@ export default function SearchBar() {
                   className="flex items-center space-x-3 p-3 hover:bg-gray-700 transition-colors"
                 >
                   <Image
-                    src={user.image || '/default-avatar.png'}
+                    src={user.image || '/default-avatar.jpeg'}
                     alt={user.name || 'User'}
                     width={32}
                     height={32}

@@ -54,7 +54,7 @@ function CommentItemComponent({ comment, postId, mutate }: CommentItemProps) {
   return (
     <div className="flex items-start space-x-3">
       <Image
-        src={comment.user.image || '/default-avatar.png'}
+        src={comment.user.image || '/default-avatar.jpeg'}
         alt={comment.user.name || 'User avatar'}
         width={32}
         height={32}

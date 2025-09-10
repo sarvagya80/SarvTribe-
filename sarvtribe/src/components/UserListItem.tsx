@@ -38,7 +38,7 @@ export default function UserListItem({ user, listType, mutate }: UserListItemPro
     <div className="flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
       <Link href={`/profile/${user.id}`} className="flex items-center space-x-3">
         <Image
-          src={user.image || '/default-avatar.png'}
+          src={user.image || '/default-avatar.jpeg'}
           alt={user.name || 'User'}
           width={44}
           height={44}

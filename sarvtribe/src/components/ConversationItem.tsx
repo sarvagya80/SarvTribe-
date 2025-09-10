@@ -44,7 +44,7 @@ export default function ConversationItem({ conversation, isSelected, onSelect, h
     >
       {/* Avatar */}
       <Image
-        src={otherUser?.image || '/default-avatar.png'}
+        src={otherUser?.image || '/default-avatar.jpeg'}
         alt={`${otherUser?.name}'s avatar`}
         width={48}
         height={48}

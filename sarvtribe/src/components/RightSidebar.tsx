@@ -13,7 +13,7 @@ export default function RightSidebar() {
   const { data: session } = useSession();
   const router = useRouter();
 
-  const { data: suggestions, mutate } = useSWR<User[]>('/api/users/suggestions', fetcher);
+  const { data: suggestions, mutate } = useSWR<User[]>('/api/suggestions', fetcher);
 
   const handleFollow = async (targetUserId: string) => {
     if (!session) {
@@ -38,11 +38,12 @@ export default function RightSidebar() {
           <div className="flex items-center space-x-3">
             <Link href={`/profile/${session.user.id}`}>
               <Image
-                src={session.user.image || '/default-avatar.png'}
+                src={session.user.image || '/default-avatar.jpeg'}
                 alt="Your avatar"
                 width={56}
                 height={56}
-                className="rounded-full border border-gray-700"
+                className="rounded-full object-cover border border-gray-700"
+                key={session.user.image}
               />
             </Link>
             <div>
@@ -66,11 +67,12 @@ export default function RightSidebar() {
                   className="flex items-center space-x-2"
                 >
                   <Image
-                    src={user.image || '/default-avatar.png'}
+                    src={user.image || '/default-avatar.jpeg'}
                     alt={user.name || 'User'}
                     width={40}
                     height={40}
-                    className="rounded-full border border-gray-700"
+                    className="rounded-full object-cover border border-gray-700"
+                    key={user.image}
                   />
                   <p className="font-medium text-xs text-white hover:text-pink-400 transition">
                     {user.name}

@@ -174,7 +174,7 @@ export default function StoryViewer({ initialUserId, onClose }: StoryViewerProps
         {/* User header */}
         <div className="absolute top-5 left-4 flex items-center space-x-2 z-20">
           <Image
-            src={activeUserData.user.image || '/default-avatar.png'}
+            src={activeUserData.user.image || '/default-avatar.jpeg'}
             alt="avatar"
             width={32}
             height={32}

@@ -25,6 +25,13 @@ model User {
   username        String?   @unique
   email           String?   @unique
   hashedPassword  String? 
+
+  // OTP for login verification
+  otp                     String?
+  otpExpires              DateTime?
+
+  passwordResetToken        String?
+  passwordResetExpires      DateTime?
   image           String?
   bio             String?
   coverPhoto      String?

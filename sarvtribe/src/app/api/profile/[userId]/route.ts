@@ -3,10 +3,10 @@ import prisma from '@/lib/prismadb';
 
 export async function GET(
   req: Request,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const userId = params.userId;
+    const { userId } = await context.params;
     if (!userId || userId.length !== 24) {
       return new NextResponse('Invalid User ID format', { status: 400 });
     }

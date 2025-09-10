@@ -28,7 +28,11 @@ import clsx from 'clsx';
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 
-export default function LeftSidebar() {
+interface LeftSidebarProps {
+  compact?: boolean;
+}
+
+export default function LeftSidebar({ compact = false }: LeftSidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
@@ -57,14 +61,19 @@ export default function LeftSidebar() {
     { name: 'Profile', href: `/profile/${session.user.id}`, icon: UserCircleIcon, hasUnread: false },
   ];
 
+  const asideWidth = compact ? 'w-20' : 'w-64';
+  const linkPadding = compact ? 'p-3 justify-center' : 'p-3';
+  const showLabel = !compact;
+
   return (
-    <aside className="hidden lg:flex flex-col justify-between w-64 p-4 border-r border-gray-200 dark:border-gray-700">
+    <aside className={`hidden lg:flex sticky top-0 self-start h-screen flex-col justify-between ${asideWidth} p-4 border-r border-gray-200 dark:border-gray-700`}>
       <div>
-        <Link
-          href="/"
-          className="text-3xl font-bold text-gray-900 dark:text-white mb-8 block"
-        >
-          SarvTribe
+        <Link href="/" className={`mb-8 block ${compact ? 'text-center' : ''}`}>
+          {showLabel ? (
+            <span className="text-3xl font-bold text-gray-900 dark:text-white">SarvTribe</span>
+          ) : (
+            <span className="text-2xl font-extrabold text-gray-900 dark:text-white">S</span>
+          )}
         </Link>
         <nav className="space-y-2">
           {navLinks.map((link) => (
@@ -72,7 +81,7 @@ export default function LeftSidebar() {
               key={link.name}
               href={link.href}
               className={clsx(
-                'flex items-center space-x-3 p-3 rounded-lg transition-colors text-lg',
+                `flex items-center space-x-3 ${linkPadding} rounded-lg transition-colors text-lg`,
                 pathname === link.href
                   ? 'bg-gray-200 dark:bg-gray-700 font-bold'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -84,24 +93,27 @@ export default function LeftSidebar() {
                   <span className="absolute -top-1 -right-1 block h-3 w-3 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-900" />
                 )}
               </div>
-              <span>{link.name}</span>
+              {showLabel && <span>{link.name}</span>}
             </Link>
           ))}
         </nav>
       </div>
 
       <Menu as="div" className="relative">
-        <MenuButton className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+        <MenuButton className={`w-full flex items-center ${linkPadding} space-x-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800`}>
           <Image
-            src={session.user.image || '/default-avatar.png'}
+            src={session.user.image || '/default-avatar.jpeg'}
             alt={session.user.name || 'User Avatar'}
             width={40}
             height={40}
-            className="rounded-full"
+            className="rounded-full object-cover"
+            key={session.user.image}
           />
-          <div className="flex-grow text-left">
-            <p className="font-semibold text-sm">{session.user.name}</p>
-          </div>
+          {showLabel && (
+            <div className="flex-grow text-left">
+              <p className="font-semibold text-sm">{session.user.name}</p>
+            </div>
+          )}
           <EllipsisHorizontalIcon className="w-6 h-6" />
         </MenuButton>
         <Transition
@@ -115,19 +127,6 @@ export default function LeftSidebar() {
         >
           <MenuItems className="absolute bottom-full left-0 mb-2 w-full origin-bottom-left divide-y divide-gray-200 dark:divide-gray-600 rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
             <div className="px-1 py-1">
-              <MenuItem>
-                {({ active }) => (
-                  <Link
-                    href="/settings"
-                    className={clsx(
-                      active ? 'bg-indigo-600 text-white' : 'text-gray-900 dark:text-gray-300',
-                      'group flex w-full items-center rounded-md px-2 py-2 text-sm'
-                    )}
-                  >
-                    <Cog6ToothIcon className="mr-2 h-5 w-5" /> Settings
-                  </Link>
-                )}
-              </MenuItem>
               <MenuItem>
                 {({ active }) => (
                   <Link

@@ -18,7 +18,7 @@ export default function MessageBubble({ message }: { message: any }) {
       >
         {!isOwnMessage && (
           <Image
-            src={message.sender.image || '/default-avatar.png'}
+            src={message.sender.image || '/default-avatar.jpeg'}
             alt="avatar"
             width={32}
             height={32}

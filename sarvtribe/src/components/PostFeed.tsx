@@ -5,6 +5,7 @@ import useSWR from 'swr';
 import { Post, User, Like, Comment, CommentLike } from '@prisma/client';
 import { AnimatePresence, motion } from 'framer-motion';
 import { socket } from '@/lib/prismadb'; // Use the shared socket instance
+import { PostListSkeleton } from './Skeletons';
 import PostCard from "./PostCard";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -51,13 +52,7 @@ export default function PostFeed({ feedType }: PostFeedProps) {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center mt-20">
-        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (isLoading) return <PostListSkeleton count={4} />;
 
   if (!posts || posts.length === 0) {
     return (

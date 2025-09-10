@@ -164,11 +164,12 @@ export default function CreatePost() {
             {/* Avatar */}
             <div className="flex-shrink-0">
               <Image
-                src={session?.user?.image || '/default-avatar.png'}
+                src={session?.user?.image || '/default-avatar.jpeg'}
                 alt="Your avatar"
                 width={48}
                 height={48}
                 className="rounded-full object-cover shadow-md"
+                key={session?.user?.image}
               />
             </div>
 
@@ -290,8 +291,18 @@ export default function CreatePost() {
 
           {/* Emoji Picker */}
           {showEmojiPicker && (
-            <div className="absolute top-full right-6 mt-2 z-20">
-              <Picker onEmojiClick={onEmojiClick} theme={Theme.DARK} />
+            <div className="absolute top-full right-6 mt-2 z-50">
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label="Close emoji picker"
+                  onClick={() => setShowEmojiPicker(false)}
+                  className="absolute -top-2 -right-2 z-50 bg-black/70 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                >
+                  ×
+                </button>
+                <Picker onEmojiClick={(e) => { onEmojiClick(e); setShowEmojiPicker(false); }} theme={Theme.DARK} />
+              </div>
             </div>
           )}
         </div>

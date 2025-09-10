@@ -11,39 +11,80 @@ export const authOptions: AuthOptions = {
       name: 'Credentials',
       credentials: {
         email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        otp: { label: "OTP", type: "text" }, // Add OTP to credentials
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.email || !credentials?.password || !credentials?.otp) {
+          throw new Error('Missing credentials');
+        }
+
+        const email = credentials.email.trim();
+        const password = credentials.password.trim();
+        const otp = credentials.otp.trim();
+
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user || !user.hashedPassword || !user.otp || !user.otpExpires) {
           throw new Error('Invalid credentials');
         }
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
-        if (!user || !user.hashedPassword) {
-          throw new Error('Invalid credentials');
-        }
-        const isCorrectPassword = await bcrypt.compare(
-          credentials.password,
-          user.hashedPassword
-        );
+
+        // 1. Check if password is correct
+        const isCorrectPassword = await bcrypt.compare(password, user.hashedPassword);
         if (!isCorrectPassword) {
           throw new Error('Invalid credentials');
         }
-        return user;
+
+        // 2. Check if OTP has expired
+        if (user.otpExpires < new Date()) {
+          throw new Error('OTP has expired');
+        }
+
+        // 3. Check if OTP is correct
+        const isCorrectOtp = await bcrypt.compare(otp, user.otp);
+        if (!isCorrectOtp) {
+          throw new Error('Invalid OTP');
+        }
+        
+        // Clear the OTP after successful verification
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { otp: null, otpExpires: null },
+        });
+
+        return user; // Success
       }
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // On initial sign in, persist id and image on the token
       if (user) {
         token.id = user.id;
+        // @ts-expect-error next-auth token allows picture
+        token.picture = (user as any).image ?? null;
+        token.name = user.name ?? token.name;
+      }
+      // When client calls session.update, sync new values to token
+      if (trigger === 'update' && session) {
+        if (session.image !== undefined) {
+          // @ts-expect-error allow picture field
+          token.picture = session.image;
+        }
+        if (session.name !== undefined) {
+          token.name = session.name;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        // Ensure latest picture and name propagate to session
+        // @ts-expect-error token.picture is standard in next-auth
+        session.user.image = (token as any).picture ?? session.user.image ?? null;
+        if (token.name) {
+          session.user.name = token.name as string;
+        }
       }
       return session;
     },
