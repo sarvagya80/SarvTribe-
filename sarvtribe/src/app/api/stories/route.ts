@@ -67,6 +67,30 @@ export async function GET(request: Request) {
       },
       include: {
         user: true, // Include the author's details
+        likes: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                image: true,
+              }
+            }
+          }
+        },
+        views: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                image: true,
+              }
+            }
+          }
+        },
       },
       orderBy: {
         createdAt: 'desc',

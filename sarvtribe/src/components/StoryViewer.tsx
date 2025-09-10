@@ -3,9 +3,8 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react';
 import useSWR from 'swr';
 import Image from 'next/image';
-import { XMarkIcon, EllipsisHorizontalIcon, TrashIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/react/24/solid';
+import { XMarkIcon, EllipsisHorizontalIcon, TrashIcon, SpeakerWaveIcon, SpeakerXMarkIcon, HeartIcon, EyeIcon } from '@heroicons/react/24/solid';
 import { motion, AnimatePresence } from 'framer-motion';
-import clsx from 'clsx';
 import { useSession } from 'next-auth/react';
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react';
 
@@ -22,8 +21,15 @@ export default function StoryViewer({ initialUserId, onClose }: StoryViewerProps
   
   const [activeUserIndex, setActiveUserIndex] = useState(0);
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [videoDuration, setVideoDuration] = useState(7); // Default 7 seconds for images
+  const [progress, setProgress] = useState(0); // Progress percentage (0-100)
+  const [isLiked, setIsLiked] = useState(false);
+  const [showViews, setShowViews] = useState(false);
+  const [storyViews, setStoryViews] = useState<any[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const usersWithStories = useMemo(() => {
     if (!allStories) return [];
@@ -61,6 +67,17 @@ export default function StoryViewer({ initialUserId, onClose }: StoryViewerProps
     if (!activeStory) return;
     if (audioRef.current) audioRef.current.pause();
     
+    // Reset progress
+    setProgress(0);
+    
+    // Set duration based on media type
+    if (activeStory.mediaType === 'VIDEO') {
+      // For videos, we'll get the duration from the video element
+      setVideoDuration(7); // Default fallback
+    } else {
+      setVideoDuration(7); // Images show for 7 seconds
+    }
+    
     if (activeStory.musicUrl) {
       const audio = new Audio(activeStory.musicUrl);
       audio.muted = isMuted;
@@ -68,16 +85,111 @@ export default function StoryViewer({ initialUserId, onClose }: StoryViewerProps
       audio.play().catch(e => console.error("Audio playback failed:", e));
     }
     
-    const timer = setTimeout(goToNextStory, 7000);
+    // Start progress tracking
+    if (activeStory.mediaType === 'IMAGE') {
+      // For images, use a simple timer
+      const startTime = Date.now();
+      const updateProgress = () => {
+        const elapsed = Date.now() - startTime;
+        const progressPercent = Math.min((elapsed / 7000) * 100, 100);
+        setProgress(progressPercent);
+        
+        if (progressPercent >= 100) {
+          goToNextStory();
+        } else {
+          progressIntervalRef.current = setTimeout(updateProgress, 50);
+        }
+      };
+      progressIntervalRef.current = setTimeout(updateProgress, 50);
+    }
 
     return () => {
-      clearTimeout(timer);
+      if (progressIntervalRef.current) {
+        clearTimeout(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
     };
   }, [activeStory, isMuted]);
+
+  const handleVideoLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    if (video.duration && !isNaN(video.duration)) {
+      setVideoDuration(video.duration);
+    }
+  };
+
+  const handleVideoTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    if (video.duration && !isNaN(video.duration)) {
+      const progressPercent = (video.currentTime / video.duration) * 100;
+      setProgress(progressPercent);
+    }
+  };
+
+  const handleVideoEnded = () => {
+    setProgress(100);
+    goToNextStory();
+  };
+
+  // Track story view when story changes
+  useEffect(() => {
+    if (activeStory && session?.user?.id) {
+      // Record view
+      fetch(`/api/stories/${activeStory.id}/view`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }).catch(console.error);
+
+      // Check if current user liked this story
+      const userLiked = activeStory.likes?.some((like: any) => like.userId === session.user.id);
+      setIsLiked(!!userLiked);
+    }
+  }, [activeStory, session?.user?.id]);
+
+  const handleLikeStory = async () => {
+    if (!activeStory || !session?.user?.id) return;
+
+    try {
+      if (isLiked) {
+        // Unlike
+        const response = await fetch(`/api/stories/${activeStory.id}/like`, {
+          method: 'DELETE',
+        });
+        if (response.ok) {
+          setIsLiked(false);
+        }
+      } else {
+        // Like
+        const response = await fetch(`/api/stories/${activeStory.id}/like`, {
+          method: 'POST',
+        });
+        if (response.ok) {
+          setIsLiked(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error liking story:', error);
+    }
+  };
+
+  const handleShowViews = async () => {
+    if (!activeStory || !isOwner) return;
+
+    try {
+      const response = await fetch(`/api/stories/${activeStory.id}/views`);
+      if (response.ok) {
+        const views = await response.json();
+        setStoryViews(views);
+        setShowViews(true);
+      }
+    } catch (error) {
+      console.error('Error fetching story views:', error);
+    }
+  };
 
   const toggleMute = () => {
     if (audioRef.current) {
@@ -123,12 +235,9 @@ export default function StoryViewer({ initialUserId, onClose }: StoryViewerProps
             <div key={index} className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden">
               {index < activeStoryIndex && <div className="h-full bg-white" />}
               {index === activeStoryIndex && (
-                <motion.div
-                  className="h-full bg-white"
-                  initial={{ width: '0%' }}
-                  animate={{ width: '100%' }}
-                  transition={{ duration: 7, ease: 'linear' }}
-                  key={activeStory.id}
+                <div
+                  className="h-full bg-white transition-all duration-100 ease-linear"
+                  style={{ width: `${progress}%` }}
                 />
               )}
             </div>
@@ -161,11 +270,16 @@ export default function StoryViewer({ initialUserId, onClose }: StoryViewerProps
               />
             ) : (
               <video
+                ref={videoRef}
                 src={activeStory.mediaUrl}
                 autoPlay
                 playsInline
+                muted={isMuted}
                 className="max-h-full max-w-full object-contain"
                 style={{ filter: activeStory.filter || 'none' }}
+                onEnded={handleVideoEnded}
+                onLoadedMetadata={handleVideoLoadedMetadata}
+                onTimeUpdate={handleVideoTimeUpdate}
               />
             )}
           </motion.div>
@@ -178,9 +292,35 @@ export default function StoryViewer({ initialUserId, onClose }: StoryViewerProps
             alt="avatar"
             width={32}
             height={32}
-            className="rounded-full"
+            className="rounded-full object-cover"
           />
           <p className="text-white font-semibold text-sm">{activeUserData.user.name}</p>
+          <span className="text-white/70 text-xs">
+            {new Date(activeStory.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+
+        {/* Story interactions */}
+        <div className="absolute bottom-20 right-4 flex flex-col space-y-4 z-30">
+          {/* Like button */}
+          <button
+            onClick={handleLikeStory}
+            className="flex items-center space-x-2 text-white hover:scale-110 transition-transform"
+          >
+            <HeartIcon className={`w-8 h-8 ${isLiked ? 'text-red-500 fill-current' : 'text-white'}`} />
+            <span className="text-sm font-medium">{activeStory.likes?.length || 0}</span>
+          </button>
+
+          {/* Views button (only for story owner) */}
+          {isOwner && (
+            <button
+              onClick={handleShowViews}
+              className="flex items-center space-x-2 text-white hover:scale-110 transition-transform"
+            >
+              <EyeIcon className="w-8 h-8" />
+              <span className="text-sm font-medium">{activeStory.views?.length || 0}</span>
+            </button>
+          )}
         </div>
 
         {/* Controls */}
@@ -237,6 +377,49 @@ export default function StoryViewer({ initialUserId, onClose }: StoryViewerProps
         <div className="absolute top-0 left-0 w-1/3 h-full z-20" onClick={goToPrevStory} />
         <div className="absolute top-0 right-0 w-1/3 h-full z-20" onClick={goToNextStory} />
       </div>
+
+      {/* Story Views Modal */}
+      {showViews && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 max-h-96 overflow-hidden">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Story Views</h3>
+              <button
+                onClick={() => setShowViews(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {storyViews.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-4">No views yet</p>
+              ) : (
+                storyViews.map((view) => (
+                  <div key={view.id} className="flex items-center space-x-3">
+                    <Image
+                      src={view.user.image || '/default-avatar.jpeg'}
+                      alt={view.user.name || 'User'}
+                      width={40}
+                      height={40}
+                      className="rounded-full object-cover"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {view.user.name || view.user.username || 'Unknown User'}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {new Date(view.viewedAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

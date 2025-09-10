@@ -56,8 +56,8 @@ export default function CreateStoryPage() {
       video.preload = 'metadata';
       video.onloadedmetadata = function () {
         window.URL.revokeObjectURL(video.src);
-        if (video.duration > 90) {
-          setError('Video is too long. Maximum duration is 90 seconds.');
+        if (video.duration > 60) {
+          setError('Video is too long. Maximum duration is 1 minute.');
           if (fileInputRef.current) fileInputRef.current.value = '';
         } else {
           setMediaFile(file);
@@ -153,7 +153,7 @@ export default function CreateStoryPage() {
               mediaType === 'IMAGE' ? (
                 <Image src={mediaPreview} alt="Story preview" fill className="object-cover" style={{ filter }} />
               ) : (
-                <video src={mediaPreview} autoPlay loop muted className="w-full h-full object-cover" style={{ filter }} />
+                <video src={mediaPreview} autoPlay loop muted controls className="w-full h-full object-cover" style={{ filter }} />
               )
             ) : (
               <div onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center text-gray-400 cursor-pointer">

@@ -12,9 +12,9 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { postBody, imageUrl, textOverlay, filter, textPosition, musicUrl } = body;
+    const { postBody, imageUrl, videoUrl, textOverlay, filter, textPosition, musicUrl } = body;
 
-    if (!postBody && !imageUrl) {
+    if (!postBody && !imageUrl && !videoUrl) {
       return new NextResponse('Post cannot be empty', { status: 400 });
     }
     
@@ -26,6 +26,7 @@ export async function POST(request: Request) {
       data: {
         body: postBody,
         imageUrl: imageUrl,
+        videoUrl: videoUrl,
         hashtags: hashtags,
         textOverlay,
         filter,

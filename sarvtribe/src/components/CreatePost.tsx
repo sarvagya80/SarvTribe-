@@ -10,7 +10,8 @@ import {
   XCircleIcon, 
   PlayIcon, 
   PauseIcon,
-  AdjustmentsHorizontalIcon
+  AdjustmentsHorizontalIcon,
+  VideoCameraIcon
 } from '@heroicons/react/24/solid';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -33,6 +34,8 @@ export default function CreatePost() {
   const [postBody, setPostBody] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 
@@ -44,6 +47,7 @@ export default function CreatePost() {
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -63,6 +67,32 @@ export default function CreatePost() {
     if (file) {
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
+      // Clear video if image is selected
+      setVideoFile(null);
+      setVideoPreview(null);
+    }
+  };
+
+  const handleVideoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Check video duration (2 minutes = 120 seconds)
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = function () {
+        window.URL.revokeObjectURL(video.src);
+        if (video.duration > 120) {
+          alert('Video is too long. Maximum duration is 2 minutes.');
+          if (videoInputRef.current) videoInputRef.current.value = '';
+        } else {
+          setVideoFile(file);
+          setVideoPreview(URL.createObjectURL(file));
+          // Clear image if video is selected
+          setImageFile(null);
+          setImagePreview(null);
+        }
+      };
+      video.src = URL.createObjectURL(file);
     }
   };
 
@@ -104,10 +134,12 @@ export default function CreatePost() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!postBody.trim() && !imagePreview) return;
+    if (!postBody.trim() && !imagePreview && !videoPreview) return;
     previewAudioRef.current?.pause();
     setIsLoading(true);
     let imageUrl = '';
+    let videoUrl = '';
+    
     if (imageFile) {
       const formData = new FormData();
       formData.append('file', imageFile);
@@ -121,12 +153,24 @@ export default function CreatePost() {
       imageUrl = imagePreview;
     }
 
+    if (videoFile) {
+      const formData = new FormData();
+      formData.append('file', videoFile);
+      formData.append('upload_preset', 'sarvtribe_preset');
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/video/upload`, {
+        method: 'POST', body: formData,
+      });
+      const data = await response.json();
+      videoUrl = data.secure_url;
+    }
+
     await fetch('/api/posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         postBody, 
         imageUrl,
+        videoUrl,
         filter,
         musicUrl: selectedTrack?.audioUrl,
       }),
@@ -135,9 +179,12 @@ export default function CreatePost() {
     setPostBody('');
     setImageFile(null);
     setImagePreview(null);
+    setVideoFile(null);
+    setVideoPreview(null);
     setSelectedTrack(null);
     setFilter('none');
     if (fileInputRef.current) fileInputRef.current.value = '';
+    if (videoInputRef.current) videoInputRef.current.value = '';
     setIsLoading(false);
     router.refresh();
   };
@@ -149,6 +196,7 @@ export default function CreatePost() {
         <PhotoEditor 
           onSave={handleImageEdited}
           onClose={() => setIsEditorOpen(false)}
+          imageFile={imageFile}
         />
       )}
       <ImageSearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)} onImageSelect={handleImageSelectFromSearch} />
@@ -184,7 +232,7 @@ export default function CreatePost() {
                 disabled={isLoading}
               />
 
-              {/* Image preview (if any) */}
+              {/* Media preview (image or video) */}
               {imagePreview && (
                 <div className="mt-3 relative w-full rounded-lg overflow-hidden border border-white/10 bg-black/30">
                   <div className="relative w-full h-48 sm:h-56">
@@ -213,8 +261,33 @@ export default function CreatePost() {
                 </div>
               )}
 
+              {videoPreview && (
+                <div className="mt-3 relative w-full rounded-lg overflow-hidden border border-white/10 bg-black/30">
+                  <div className="relative w-full h-48 sm:h-56">
+                    <video 
+                      src={videoPreview} 
+                      controls 
+                      className="w-full h-full object-cover" 
+                      style={{ filter }}
+                    />
+                  </div>
+
+                  {/* small overlay controls */}
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <button
+                      type="button"
+                      title="Remove video"
+                      onClick={() => { setVideoFile(null); setVideoPreview(null); }}
+                      className="bg-black/40 text-white p-2 rounded-full hover:bg-black/50 transition"
+                    >
+                      <XCircleIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Filter options */}
-              {imagePreview && (
+              {(imagePreview || videoPreview) && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {filterOptions.map(f => (
                     <button
@@ -250,14 +323,25 @@ export default function CreatePost() {
               {/* bottom toolbar */}
               <div className="flex items-center justify-between mt-4">
                 <div className="flex items-center gap-2">
-                  {/* hidden file input */}
+                  {/* hidden file inputs */}
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                  <input ref={videoInputRef} type="file" accept="video/*" onChange={handleVideoChange} className="hidden" />
 
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full bg-white/6 hover:bg-white/10 transition">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full bg-white/6 hover:bg-white/10 transition" title="Add photo">
                     <PhotoIcon className="w-5 h-5 text-white/90" />
                   </button>
 
-                  <button type="button" onClick={() => setIsEditorOpen(true)} className="p-2 rounded-full bg-white/6 hover:bg-white/10 transition" title="Open editor">
+                  <button type="button" onClick={() => videoInputRef.current?.click()} className="p-2 rounded-full bg-white/6 hover:bg-white/10 transition" title="Add video">
+                    <VideoCameraIcon className="w-5 h-5 text-white/90" />
+                  </button>
+
+                  <button 
+                    type="button" 
+                    onClick={() => setIsEditorOpen(true)} 
+                    disabled={!imageFile}
+                    className="p-2 rounded-full bg-white/6 hover:bg-white/10 transition disabled:opacity-50 disabled:cursor-not-allowed" 
+                    title={imageFile ? "Edit image" : "No image to edit"}
+                  >
                     <AdjustmentsHorizontalIcon className="w-5 h-5 text-white/90" />
                   </button>
 
@@ -280,7 +364,7 @@ export default function CreatePost() {
                     form={undefined}
                     onClick={(e: any) => { /* form submit handled by onSubmit */ }}
                     className="ml-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-full font-semibold hover:from-indigo-700 hover:to-purple-700 disabled:opacity-60"
-                    disabled={isLoading || (!postBody.trim() && !imagePreview)}
+                    disabled={isLoading || (!postBody.trim() && !imagePreview && !videoPreview)}
                   >
                     {isLoading ? 'Posting...' : 'Post'}
                   </button>

@@ -33,7 +33,7 @@ interface PostCardProps {
 export default function PostCard({ post, mutate }: PostCardProps) {
   const { data: session } = useSession();
   const router = useRouter();
-  const { id: postId, user: author, body: caption, likes, createdAt, imageUrl, musicUrl, comments } =
+  const { id: postId, user: author, body: caption, likes, createdAt, imageUrl, videoUrl, musicUrl, comments } =
     post;
   const { name: authorName, image: authorAvatar } = author;
 
@@ -212,7 +212,7 @@ export default function PostCard({ post, mutate }: PostCardProps) {
         )}
       </div>
 
-      {/* Post Image & Music Overlay */}
+      {/* Post Media & Music Overlay */}
       {imageUrl && (
         <div className="relative w-full aspect-square group">
           <Image src={imageUrl} alt="Post content" fill className="object-cover" />
@@ -225,6 +225,29 @@ export default function PostCard({ post, mutate }: PostCardProps) {
                 <SpeakerWaveIcon className="w-16 h-16 text-white/80" />
               ) : (
                 <PlayCircleIcon className="w-20 h-20 text-white/80" />
+              )}
+            </button>
+          )}
+        </div>
+      )}
+
+      {videoUrl && (
+        <div className="relative w-full aspect-square group">
+          <video 
+            src={videoUrl} 
+            controls 
+            className="w-full h-full object-cover"
+            preload="metadata"
+          />
+          {musicUrl && (
+            <button
+              onClick={togglePlayPause}
+              className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition"
+            >
+              {isPlaying ? (
+                <SpeakerWaveIcon className="w-6 h-6" />
+              ) : (
+                <PlayCircleIcon className="w-6 h-6" />
               )}
             </button>
           )}

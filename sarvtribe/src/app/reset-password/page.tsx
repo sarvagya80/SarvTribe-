@@ -15,7 +15,7 @@ function ResetPasswordForm() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
-
+  
   useEffect(() => {
     const prefillEmail = searchParams.get('email');
     if (prefillEmail) setEmail(prefillEmail);

@@ -50,6 +50,8 @@ model User {
   commentLikes    CommentLike[]
   messages        Message[] @relation("SentMessages")
   stories         Story[]
+  storyLikes      StoryLike[]
+  storyViews      StoryView[]
   storyHighlights StoryHighlight[]
   notifications   Notification[] @relation("UserNotifications")
   conversations   Conversation[] @relation(fields: [conversationIds], references: [id])
@@ -90,6 +92,7 @@ model Post {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   body         String?
   imageUrl     String?
+  videoUrl     String?
   hashtags     String[]
   musicUrl     String?
   filter       String?
@@ -198,6 +201,10 @@ model Story {
   expiresAt    DateTime
   userId       String   @db.ObjectId
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Story interactions
+  likes        StoryLike[]
+  views        StoryView[]
 }
 
 model StoryHighlight {
@@ -221,4 +228,25 @@ model Notification {
   senderId    String
   senderName  String
   senderImage String?
+}
+
+model StoryLike {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  storyId String @db.ObjectId
+  userId  String @db.ObjectId
+  story   Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([storyId, userId])
+}
+
+model StoryView {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  storyId String   @db.ObjectId
+  userId  String   @db.ObjectId
+  viewedAt DateTime @default(now())
+  story   Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([storyId, userId])
 }

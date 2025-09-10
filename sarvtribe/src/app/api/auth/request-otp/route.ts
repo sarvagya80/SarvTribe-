@@ -28,24 +28,38 @@ export async function POST(request: Request) {
       data: { otp: hashedOtp, otpExpires },
     });
 
+    const { EMAIL_SERVER_USER, EMAIL_SERVER_PASSWORD, EMAIL_FROM } = process.env as Record<string, string | undefined>;
+    if (!EMAIL_SERVER_USER || !EMAIL_SERVER_PASSWORD || !EMAIL_FROM) {
+      console.error('EMAIL ENV MISSING', { EMAIL_SERVER_USER: !!EMAIL_SERVER_USER, EMAIL_FROM: !!EMAIL_FROM });
+      return new NextResponse('Email is not configured', { status: 500 });
+    }
+
     const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_SERVER_USER,
-            pass: process.env.EMAIL_SERVER_PASSWORD,
-        },
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: EMAIL_SERVER_USER,
+        pass: EMAIL_SERVER_PASSWORD,
+      },
     });
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
-      to: email,
-      subject: 'Your SarvTribe Login Verification Code',
-      text: `Your OTP is: ${otp}`,
-    });
+    try {
+      await transporter.sendMail({
+        from: EMAIL_FROM,
+        to: email,
+        subject: 'Your SarvTribe Login Verification Code',
+        text: `Your OTP is: ${otp}`,
+      });
+    } catch (e) {
+      console.error('SENDMAIL_ERROR', e);
+      return new NextResponse('Failed to send OTP email', { status: 500 });
+    }
 
     return new NextResponse('OTP sent successfully', { status: 200 });
 
   } catch (error) {
+    console.error('REQUEST_OTP_ERROR', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
