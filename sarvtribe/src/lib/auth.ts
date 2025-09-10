@@ -59,16 +59,14 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user, trigger, session }) {
       // On initial sign in, persist id and image on the token
       if (user) {
-        token.id = user.id;
-        // @ts-expect-error next-auth token allows picture
-        token.picture = (user as any).image ?? null;
+        token.id = user.id as unknown as string;
+        (token as any).picture = (user as any).image ?? null;
         token.name = user.name ?? token.name;
       }
       // When client calls session.update, sync new values to token
       if (trigger === 'update' && session) {
-        if (session.image !== undefined) {
-          // @ts-expect-error allow picture field
-          token.picture = session.image;
+        if ((session as any).image !== undefined) {
+          (token as any).picture = (session as any).image;
         }
         if (session.name !== undefined) {
           token.name = session.name;
@@ -80,8 +78,7 @@ export const authOptions: AuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         // Ensure latest picture and name propagate to session
-        // @ts-expect-error token.picture is standard in next-auth
-        session.user.image = (token as any).picture ?? session.user.image ?? null;
+        session.user.image = (token as any).picture ?? (session.user.image ?? null);
         if (token.name) {
           session.user.name = token.name as string;
         }
