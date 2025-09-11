@@ -28,19 +28,16 @@ export default function PhotoEditorFallback({ onSave, onClose, imageFile }: Phot
       const img = new Image();
       img.onload = () => {
         setImage(img);
-        // Save initial state to history
-        const canvas = canvasRef.current;
-        if (canvas) {
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0);
+        // Apply filters will handle the canvas sizing and initial draw
+        // We'll save the initial state after applyFilters runs
+        setTimeout(() => {
+          const canvas = canvasRef.current;
+          if (canvas) {
             const dataURL = canvas.toDataURL();
             setHistory([dataURL]);
             setHistoryIndex(0);
           }
-        }
+        }, 100);
       };
       img.src = URL.createObjectURL(imageFile);
     }
@@ -59,11 +56,31 @@ export default function PhotoEditorFallback({ onSave, onClose, imageFile }: Phot
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Calculate display size while maintaining aspect ratio
+    const containerWidth = canvas.parentElement?.clientWidth || 800;
+    const containerHeight = canvas.parentElement?.clientHeight || 600;
+    const imageAspectRatio = image.width / image.height;
+    const containerAspectRatio = containerWidth / containerHeight;
+
+    let displayWidth, displayHeight;
+    if (imageAspectRatio > containerAspectRatio) {
+      // Image is wider than container
+      displayWidth = Math.min(containerWidth - 40, image.width);
+      displayHeight = displayWidth / imageAspectRatio;
+    } else {
+      // Image is taller than container
+      displayHeight = Math.min(containerHeight - 40, image.height);
+      displayWidth = displayHeight * imageAspectRatio;
+    }
+
+    // Set canvas size to display size
+    canvas.width = displayWidth;
+    canvas.height = displayHeight;
+    canvas.style.width = `${displayWidth}px`;
+    canvas.style.height = `${displayHeight}px`;
+
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw original image
-    ctx.drawImage(image, 0, 0);
     
     // Apply filters
     const filterString = `
@@ -76,7 +93,7 @@ export default function PhotoEditorFallback({ onSave, onClose, imageFile }: Phot
     `;
     
     ctx.filter = filterString;
-    ctx.drawImage(image, 0, 0);
+    ctx.drawImage(image, 0, 0, displayWidth, displayHeight);
   };
 
   const saveToHistory = () => {
@@ -101,7 +118,7 @@ export default function PhotoEditorFallback({ onSave, onClose, imageFile }: Phot
           const img = new Image();
           img.onload = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           };
           img.src = history[newIndex];
         }
@@ -120,7 +137,7 @@ export default function PhotoEditorFallback({ onSave, onClose, imageFile }: Phot
           const img = new Image();
           img.onload = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           };
           img.src = history[newIndex];
         }
@@ -204,14 +221,18 @@ export default function PhotoEditorFallback({ onSave, onClose, imageFile }: Phot
           </div>
         </div>
 
-        <div className="flex h-[70vh]">
+        <div className="flex h-[80vh]">
           {/* Canvas Area */}
           <div className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-            <div className="max-w-full max-h-full overflow-auto">
+            <div className="w-full h-full overflow-auto flex items-center justify-center">
               <canvas
                 ref={canvasRef}
-                className="max-w-full max-h-full border border-gray-300 dark:border-gray-600 rounded-lg"
-                style={{ maxWidth: '100%', maxHeight: '100%' }}
+                className="border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg"
+                style={{ 
+                  maxWidth: '100%', 
+                  maxHeight: '100%',
+                  objectFit: 'contain'
+                }}
               />
             </div>
           </div>
