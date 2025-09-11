@@ -22,6 +22,7 @@ export type PostType = {
   userId: string;
   body: string | null;
   imageUrl: string | null;
+  videoUrl: string | null;
   hashtags: string[];
   musicUrl: string | null;
   filter: string | null;
