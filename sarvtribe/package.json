@@ -7,7 +7,10 @@
     "build": "next build",
     "postinstall": "prisma generate",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "render-postbuild": "prisma db push",
+    "socket:dev": "node socket-server.js",
+    "socket:start": "node socket-server.js"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",

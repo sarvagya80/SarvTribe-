@@ -1,4 +1,10 @@
-# Vercel Deployment Guide
+# Deployment Guides
+
+## Render Deployment (Recommended for Socket.IO)
+
+For deployments with Socket.IO support, use **Render** instead of Vercel. See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) for complete instructions.
+
+## Vercel Deployment Guide
 
 ## Prerequisites
 

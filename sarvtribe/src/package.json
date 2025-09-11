@@ -2,16 +2,18 @@
   "name": "sarvtribe-socket-server",
   "version": "1.0.0",
   "description": "Socket.IO server for SarvTribe real-time features",
-  "main": "../socket-server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node ../socket-server.js",
-    "dev": "node ../socket-server.js"
+    "start": "node index.js",
+    "dev": "node index.js"
   },
   "dependencies": {
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "@socket.io/admin-ui": "^0.5.0"
   },
   "engines": {
     "node": ">=18.0.0"
   }
 }
-
