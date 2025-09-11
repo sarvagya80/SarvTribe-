@@ -35,10 +35,12 @@ Copy `env.example` to `.env.local` and fill in the following variables:
 3. **Configure Environment Variables**:
    - In Vercel dashboard, go to your project settings
    - Add all environment variables from the list above
+   - **Important**: Make sure to set `NEXTAUTH_URL` to your production domain
 
 4. **Deploy**:
    - Vercel will automatically build and deploy your application
    - The build process will run `prisma generate` automatically
+   - If you encounter build errors, check the build logs in Vercel dashboard
 
 ## Important Notes
 

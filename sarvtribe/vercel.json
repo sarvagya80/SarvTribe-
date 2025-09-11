@@ -1,16 +1,8 @@
 {
-  "functions": {
-    "socket-server.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/socket.io/(.*)",
       "destination": "/api/socket"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
